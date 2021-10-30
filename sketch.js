@@ -9,11 +9,35 @@ coding plan
         🛠
     wander()
         set wanderPoint with this.vel.copy(), setMag(DISTANCE)
-        don't forget to add this.pos!
+        don't forget to add this.pos! 🐞 setMag after add()
         set wanderRadius ➜ draw and test 🔧
         limit vel and acc, maxSpeed=2, maxForce=0.1
 
 
+		θ determines our wanderPoint in polar coordinates. test with π/2 drawn
+		make sure wanderPoint is with respect to this.vel.heading()
+		steering force is wanderPoint - this.pos
+		limit steering force magnitude to maxForce
+
+		wanderθ! θ = wanderθ + this.pos
+		maxSpeed = 2, maxForce 0.1
+		displacementRange for wanderθ
+
+		draw path
+			series of paths. all paths + currentPath
+			in edges(), push currentPath whenever we hit an edge
+				use hitEdge boolean
+			in constructor, currentPath = [], this.paths = [this.currentPath]
+			in update(), this.currentPath.push(this.pos.copy())
+			in show(), beginShape, iterate through all paths
+
+		sliders to control size of big and small circles
+
+		refactor into vector displacement
+			keep track of vector instead of wanderθ
+			wanderPoint vector.
+
+		3D
  */
 
 let font
@@ -39,11 +63,11 @@ function draw() {
 
     vehicles.forEach(v => {
         // right now we don't need to worry about the order
+        v.wander()
         v.update()
-        v.applyForce(gravityForce(0.1))
+        // v.applyForce(gravityForce(0.1))
         v.render()
         v.edges()
-        v.wander()
     })
 }
 
@@ -52,50 +76,6 @@ function gravityForce(strength) {
     return new p5.Vector(0, strength)
 }
 
-
-class Vehicle {
-    constructor(x, y) {
-        this.pos = new p5.Vector(x, y)
-        this.vel = new p5.Vector(1, 0)
-        this.acc = new p5.Vector()
-
-        this.maxForce = 0.1
-
-        // be careful of the limit! it doesn't care what direction is limited
-        this.maxSpeed = 10
-    }
-
-    wander() {
-
-    }
-
-    render() {
-        // TODO: add 9S hacking bot!
-        stroke(0, 0, 100)
-        fill(0, 0, 100, 50)
-        circle(this.pos.x, this.pos.y, 5*5)
-    }
-
-    update() {
-        this.acc.limit(this.maxForce)
-        this.vel.add(this.acc)
-        this.vel.limit(this.maxSpeed)
-        this.pos.add(this.vel)
-        this.acc.mult(0)
-    }
-
-    applyForce(force) { /* force is a p5.Vector */
-        // F=ma, so a=F/m but since we assume m=1 for now, F=a
-        this.acc.add(force)
-    }
-
-    edges() {
-        if (this.pos.x > width) {
-            // right edge
-            this.pos.x -= width
-        } else if (this.pos.y > height) {
-            // bottom edge
-            this.pos.y -= height
-        }
-    }
+function mousePressed() {
+    noLoop()
 }
