@@ -9,11 +9,11 @@ class Vehicle {
         this.vel = new p5.Vector(0.1, -0.05)
         this.acc = new p5.Vector()
 
-        this.r = 16
+        this.r = 14
         this.maxForce = 0.1
 
         // be careful of the limit! it doesn't care what direction is limited
-        this.maxSpeed = 2
+        this.maxSpeed = 3
         this.angle = PI/2
 
         // stores our path so far
@@ -21,6 +21,7 @@ class Vehicle {
         this.paths = [this.currentPath]
 
         this.hitEdge = false
+        this.sprite = loadImage("data/spaceship-48x48.png")
     }
 
     wander() {
@@ -31,12 +32,12 @@ class Vehicle {
         wanderPoint.add(this.pos)
 
         strokeWeight(1)
-        stroke(0, 0, 100, 20)
+        stroke(0, 0, 100, 40)
         line(this.pos.x, this.pos.y, wanderPoint.x, wanderPoint.y)
 
         // area of wanderPoint circle
         noFill()
-        stroke(0, 0, 100, 20)
+        stroke(0, 0, 100, 40)
         circle(wanderPoint.x, wanderPoint.y, WANDER_RADIUS*2)
 
         // point at center of wander circle
@@ -52,7 +53,7 @@ class Vehicle {
         // line between blue point (center of wander circle) and green point
         // point along wander circumference
         strokeWeight(1)
-        stroke(0, 0, 100, 20)
+        stroke(0, 0, 100, 40)
         line(wanderPoint.x, wanderPoint.y, wanderPoint.x+x, wanderPoint.y+y)
 
         wanderPoint.add(new p5.Vector(x, y))
@@ -63,7 +64,7 @@ class Vehicle {
 
         // another line from our center to the wanderPoint, now offset by angle
         strokeWeight(1)
-        stroke(0, 0, 100, 20)
+        stroke(0, 0, 100, 40)
         line(this.pos.x, this.pos.y, wanderPoint.x, wanderPoint.y)
 
         // a circle showing the range
@@ -91,7 +92,19 @@ class Vehicle {
         pop()
     }
 
-    render() {
+
+    renderSpaceship() {
+        imageMode(CENTER)
+        push()
+        translate(this.pos.x, this.pos.y)
+        rotate(this.vel.heading() + PI/2)
+        image(this.sprite, 0, 0)
+        pop()
+    }
+
+
+    // shows the 9S hacking bot
+    render9S() {
         push()
         translate(this.pos.x, this.pos.y)
         rotate(this.vel.heading())
@@ -134,6 +147,8 @@ class Vehicle {
     }
 
     renderPath() {
+
+        stroke(0, 0, 100, 10)
         for (let p of this.paths) {
             beginShape()
             for (let v of p)
