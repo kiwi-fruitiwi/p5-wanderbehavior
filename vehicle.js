@@ -6,20 +6,89 @@ const DEBUG = true
 class Vehicle {
     constructor(x, y) {
         this.pos = new p5.Vector(x, y)
-        this.vel = p5.Vector.random2D().mult(0.1)
+        this.vel = new p5.Vector(0.1, -0.05)
         this.acc = new p5.Vector()
 
-        this.r = 24
+        this.r = 16
         this.maxForce = 0.1
 
         // be careful of the limit! it doesn't care what direction is limited
-        this.maxSpeed = 10
+        this.maxSpeed = 2
+        this.angle = PI/2
 
-        this.wanderθ = PI/2
+        // stores our path so far
+        this.currentPath = []
+        this.paths = [this.currentPath]
+
+        this.hitEdge = false
     }
 
     wander() {
+        let wanderPoint = this.vel.copy()
 
+        // we set the magnitude before we add the position!
+        wanderPoint.setMag(WANDER_DISTANCE)
+        wanderPoint.add(this.pos)
+
+        strokeWeight(1)
+        stroke(0, 0, 100, 20)
+        line(this.pos.x, this.pos.y, wanderPoint.x, wanderPoint.y)
+
+        // area of wanderPoint circle
+        noFill()
+        stroke(0, 0, 100, 20)
+        circle(wanderPoint.x, wanderPoint.y, WANDER_RADIUS*2)
+
+        // point at center of wander circle
+        stroke(200, 100, 100) // blue
+        strokeWeight(3)
+        point(wanderPoint.x, wanderPoint.y)
+
+        // have our wanderPoint be somewhere on the circle
+        let totalAngle = this.vel.heading() + this.angle
+        let x = WANDER_RADIUS*cos(totalAngle)
+        let y = WANDER_RADIUS*sin(totalAngle)
+
+        // line between blue point (center of wander circle) and green point
+        // point along wander circumference
+        strokeWeight(1)
+        stroke(0, 0, 100, 20)
+        line(wanderPoint.x, wanderPoint.y, wanderPoint.x+x, wanderPoint.y+y)
+
+        wanderPoint.add(new p5.Vector(x, y))
+
+        strokeWeight(3)
+        stroke(90, 100, 100) // green
+        point(wanderPoint.x, wanderPoint.y)
+
+        // another line from our center to the wanderPoint, now offset by angle
+        strokeWeight(1)
+        stroke(0, 0, 100, 20)
+        line(this.pos.x, this.pos.y, wanderPoint.x, wanderPoint.y)
+
+        // a circle showing the range
+        circle(wanderPoint.x, wanderPoint.y, WANDER_RADIUS)
+
+        // position vector from our center to the wanderPoint
+        let steeringForce = wanderPoint.sub(this.pos)
+        steeringForce.setMag(this.maxForce)
+        this.applyForce(steeringForce)
+
+        this.angle += random(0, 0.02)
+    }
+
+    // TODO add arrows :3
+    arrow(pos, target, heading) {
+        push()
+        line(pos.x, pos.y, target.x, target.y)
+        translate(target.x, target.y)
+        rotate(heading)
+
+        line(0, 0, r, 0); // main acceleration vector
+        line(r, 0, r - 3, -3); // bottom arrow half
+        line(r, 0, r - 3, 3); // top arrow half
+
+        pop()
     }
 
     render() {
@@ -31,9 +100,10 @@ class Vehicle {
         let C = 0.2 // what is the radius of the inner circle?
         let B = 0.3 // how far away is the butt away from the origin?
         let r = this.r
+        let a = 100 // alpha
 
-        fill(0, 0, 100, 75)
-        stroke(0, 0, 0, 50)
+        fill(0, 0, 100, a)
+        stroke(0, 0, 0, a)
         strokeWeight(1)
         beginShape()
         vertex(r, 0) // front tip
@@ -43,9 +113,9 @@ class Vehicle {
         vertex(r, 0)  // front tip
         endShape()
 
-        fill(0, 0, 0, 100)
+        fill(0, 0, 0, a)
         circle(0, 0, r * C)
-        stroke(0, 0, 0, 100)
+        stroke(0, 0, 0, a)
         strokeWeight(1)
         line(0, 0, -r * T, 0) // line to the butt
 
@@ -55,12 +125,21 @@ class Vehicle {
 
         // two little squares in the back
         rectMode(CENTER)
-        fill(0, 0, 100, 75)
+        fill(0, 0, 100, a)
         strokeWeight(1)
         square(r * -B, r * T, r * 0.2)
         square(r * -B, -r * T, r * 0.2)
 
         pop()
+    }
+
+    renderPath() {
+        for (let p of this.paths) {
+            beginShape()
+            for (let v of p)
+                vertex(v.x, v.y)
+            endShape()
+        }
     }
 
     update() {
@@ -69,6 +148,8 @@ class Vehicle {
         this.vel.limit(this.maxSpeed)
         this.pos.add(this.vel)
         this.acc.mult(0)
+
+        this.currentPath.push(this.pos.copy())
     }
 
     applyForce(force) { /* force is a p5.Vector */
@@ -76,13 +157,36 @@ class Vehicle {
         this.acc.add(force)
     }
 
-    edges() {
-        if (this.pos.x > width) {
-            // right edge
+    edges() { // TODO take r into account, probably
+        let hitEdge = false
+
+        if (this.pos.x > width) { // right edge
             this.pos.x -= width
-        } else if (this.pos.y > height) {
-            // bottom edge
+            hitEdge = true
+        } else if (this.pos.x < 0) { // left edge
+            this.pos.x += width
+            hitEdge = true
+        } else if (this.pos.y < 0) { // top edge
+            this.pos.y += height
+            hitEdge = true
+        } else if (this.pos.y > height) { // bottom edge
             this.pos.y -= height
+            hitEdge = true
+        }
+
+        if (hitEdge) {
+            this.currentPath = []
+            this.paths.push(this.currentPath)
         }
     }
+
+
+
+    /*
+    in edges(), push currentPath whenever we hit an edge
+    use hitEdge boolean
+    in constructor, currentPath = [], this.paths = [this.currentPath]
+        in update(), this.currentPath.push(this.pos.copy())
+    in show(), beginShape, iterate through all paths
+     */
 }

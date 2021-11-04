@@ -9,9 +9,15 @@ coding plan
         🛠
     wander()
         set wanderPoint with this.vel.copy(), setMag(DISTANCE)
-        don't forget to add this.pos! 🐞 setMag after add()
-        set wanderRadius ➜ draw and test 🔧
+            don't forget to add this.pos! 🐞 setMag after add()
+            draw line from vehicle center to wanderPoint, plus circle around it
+        add angle to wanderPoint
+            set wanderRadius ➜ draw and test 🔧
+
+
         limit vel and acc, maxSpeed=2, maxForce=0.1
+
+        arrow method to replace line
 
 
 		θ determines our wanderPoint in polar coordinates. test with π/2 drawn
@@ -53,7 +59,7 @@ function setup() {
     createCanvas(640, 360)
     colorMode(HSB, 360, 100, 100, 100)
 
-    vehicles.push(new Vehicle(width/2, height/2))
+    vehicles.push(new Vehicle(50, 300))
     console.log("setup complete! 🐳")
 }
 
@@ -63,10 +69,11 @@ function draw() {
 
     vehicles.forEach(v => {
         // right now we don't need to worry about the order
-        v.wander()
+        v.render()
         v.update()
         // v.applyForce(gravityForce(0.1))
-        v.render()
+        v.wander()
+        v.renderPath()
         v.edges()
     })
 }
