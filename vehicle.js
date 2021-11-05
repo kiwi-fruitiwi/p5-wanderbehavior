@@ -24,6 +24,7 @@ class Vehicle {
         this.sprite = loadImage("data/spaceship-48x48.png")
     }
 
+    // TODO add more arrows
     wander() {
         let wanderPoint = this.vel.copy()
 
@@ -65,7 +66,8 @@ class Vehicle {
         // another line from our center to the wanderPoint, now offset by angle
         strokeWeight(1)
         stroke(0, 0, 100, 40)
-        line(this.pos.x, this.pos.y, wanderPoint.x, wanderPoint.y)
+        // line(this.pos.x, this.pos.y, wanderPoint.x, wanderPoint.y)
+        this.arrowLine(this.pos, wanderPoint)
 
         // a circle showing the range
         circle(wanderPoint.x, wanderPoint.y, WANDER_RADIUS)
@@ -78,13 +80,15 @@ class Vehicle {
         this.angle += random(0, 0.02)
     }
 
-    // TODO add arrows :3
-    arrow(pos, target, heading) {
+    arrowLine(pos, target) {
         push()
-        line(pos.x, pos.y, target.x, target.y)
-        translate(target.x, target.y)
-        rotate(heading)
+        translate(pos.x, pos.y)
+        let dir = p5.Vector.sub(target, pos)
+        rotate(dir.heading())
 
+        strokeWeight(1)
+        stroke(0, 0, 100, 40)
+        let r = dir.mag()
         line(0, 0, r, 0); // main acceleration vector
         line(r, 0, r - 3, -3); // bottom arrow half
         line(r, 0, r - 3, 3); // top arrow half
@@ -176,16 +180,16 @@ class Vehicle {
         let hitEdge = false
 
         if (this.pos.x > width) { // right edge
-            this.pos.x -= width
+            this.pos.x = 0
             hitEdge = true
         } else if (this.pos.x < 0) { // left edge
-            this.pos.x += width
+            this.pos.x = width
             hitEdge = true
         } else if (this.pos.y < 0) { // top edge
-            this.pos.y += height
+            this.pos.y = height
             hitEdge = true
         } else if (this.pos.y > height) { // bottom edge
-            this.pos.y -= height
+            this.pos.y = 0
             hitEdge = true
         }
 
